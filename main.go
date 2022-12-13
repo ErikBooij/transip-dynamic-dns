@@ -21,7 +21,6 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -49,9 +48,11 @@ func main() {
 	token := ""
 
 	for domain, records := range c.Domains {
-		log.Printf("Processing %s ...\n", domain)
+		log.Printf("Processing main domain %s ...\n", domain)
 
 		for subdomain, record := range records {
+			log.Printf("Processing subdomain %s ...\n", subdomain)
+
 			var lookupDomain string
 
 			switch subdomain {
@@ -63,9 +64,7 @@ func main() {
 				lookupDomain = subdomain + "." + domain
 			}
 
-			if lookupDomain[0] == '*' {
-				lookupDomain = strings.ReplaceAll(lookupDomain, "*", "test")
-			}
+			log.Printf("Using %s for lookup ...\n", lookupDomain)
 
 			configuredExternalIP, err := doLookup("ns0.transip.net", lookupDomain)
 
@@ -136,14 +135,15 @@ func main() {
 
 			response, err := http.DefaultClient.Do(updateDNSRecordRequest)
 
-			fmt.Println(fmt.Sprintf("https://api.transip.nl/v6/domains/%s/dns", domain))
-			fmt.Println(string(requestBody))
-			fmt.Println(response.StatusCode)
-			fmt.Println(err)
+			if response.StatusCode >= 200 && response.StatusCode < 300 {
+				log.Println("DNS record saved successfully")
+			} else {
+				log.Printf("DNS record could not be updated, got %d response\n", response.StatusCode)
 
-			b, _ := io.ReadAll(response.Body)
+				b, _ := io.ReadAll(response.Body)
 
-			fmt.Println(string(b))
+				log.Println(string(b))
+			}
 		}
 	}
 }
