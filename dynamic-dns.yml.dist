@@ -1,0 +1,9 @@
+domains:
+  "example.com":
+    "@":
+      ttl: 300
+    "subdomain":
+      ttl: 86400
+  "example2.com":
+    "*":
+      ttl: 3600
